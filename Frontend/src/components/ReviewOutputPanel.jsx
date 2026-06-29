@@ -7,38 +7,57 @@ import prism from "prismjs";
 const parseMetrics = (markdownText) => {
   if (!markdownText) return null;
   
-  // Count crucial issues (look for bullet points or numbered lists under Crucial Issues)
   let issueCount = 0;
-  const crucialIssuesIndex = markdownText.toLowerCase().indexOf("crucial issues");
-  if (crucialIssuesIndex !== -1) {
-    const sectionText = markdownText.slice(crucialIssuesIndex, crucialIssuesIndex + 1000);
-    // count bullet points or numbered items
-    const matches = sectionText.match(/^\s*[-*•\d+.]\s+.+/gm);
-    issueCount = matches ? matches.length : 0;
+  
+  // Find where "Crucial Issues" header starts (case-insensitive, matching markdown header ## or ###)
+  const crucialIssuesMatch = markdownText.match(/##\s*.*?(?:crucial|crucial\s+issues)/i);
+  
+  if (crucialIssuesMatch) {
+    const startIdx = crucialIssuesMatch.index + crucialIssuesMatch[0].length;
+    const remainingText = markdownText.slice(startIdx);
+    
+    // Find the next section header (e.g. ## Suggested Fixes) to stop parsing
+    const nextHeaderMatch = remainingText.match(/^#+\s+.+/m);
+    
+    // Isolate only the Crucial Issues section block
+    const sectionText = nextHeaderMatch 
+      ? remainingText.slice(0, nextHeaderMatch.index) 
+      : remainingText;
+      
+    // Check if the section text explicitly mentions "none", "no issues", "no critical issues"
+    const isCleanSection = /none|no\s+issues|no\s+critical\s+issues|no\s+crucial\s+issues/i.test(sectionText.trim());
+    
+    if (isCleanSection) {
+      issueCount = 0;
+    } else {
+      // Count bullet points or list items strictly inside this section block
+      const matches = sectionText.match(/^\s*[-*•\d+.]\s+.+/gm);
+      issueCount = matches ? matches.length : 0;
+    }
   } else {
-    // Fallback search for general bullet count
-    const matches = markdownText.match(/^\s*[-*•]\s+.+/gm);
-    issueCount = matches ? Math.min(matches.length, 4) : 0;
+    // If no crucial issues section is generated, the code is considered clean (0 issues)
+    issueCount = 0;
   }
   
   // Calculate score
-  let score = 100 - (issueCount * 12);
-  if (score < 30) score = 30;
+  let score = 100 - (issueCount * 15);
+  if (score < 40) score = 40;
   
   // Determine Grade
   let grade = "A+";
   let gradeColor = "#10b981"; // success green
-  if (score < 90 && score >= 80) { grade = "A"; gradeColor = "#10b981"; }
-  else if (score < 80 && score >= 70) { grade = "B"; gradeColor = "#38bdf8"; }
-  else if (score < 70 && score >= 50) { grade = "C"; gradeColor = "#f59e0b"; }
-  else if (score < 50) { grade = "D"; gradeColor = "#ef4444"; }
+  if (score === 100) { grade = "A+"; gradeColor = "#10b981"; }
+  else if (score >= 85) { grade = "A"; gradeColor = "#10b981"; }
+  else if (score >= 70) { grade = "B"; gradeColor = "#38bdf8"; }
+  else if (score >= 55) { grade = "C"; gradeColor = "#f59e0b"; }
+  else { grade = "D"; gradeColor = "#ef4444"; }
   
   return {
     issueCount,
     score,
     grade,
     gradeColor,
-    timeSaved: issueCount * 5 + 5
+    timeSaved: Math.max(10, issueCount * 5 + 5)
   };
 };
 
