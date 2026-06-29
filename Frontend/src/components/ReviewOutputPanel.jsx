@@ -2,6 +2,7 @@ import React from "react";
 import Markdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import { FileText, Sparkles, Copy, ShieldAlert, Code } from "lucide-react";
+import prism from "prismjs";
 
 export default function ReviewOutputPanel({
   activeTab,
@@ -81,9 +82,18 @@ export default function ReviewOutputPanel({
                   <span>Optimized Rewrite ({language})</span>
                 </div>
                 <pre className="improved-pre">
-                  <code className={`language-${language}`}>
-                    {currentImprovedCode}
-                  </code>
+                  <code 
+                    className={`language-${language}`}
+                    dangerouslySetInnerHTML={{
+                      __html: (() => {
+                        let grammar = prism.languages[language];
+                        if (!grammar) {
+                          grammar = prism.languages.javascript;
+                        }
+                        return prism.highlight(currentImprovedCode || "", grammar, language);
+                      })()
+                    }}
+                  />
                 </pre>
               </div>
             )}
