@@ -39,6 +39,10 @@ function App() {
     activeTab,
     setActiveTab,
     history,
+    searchQuery,
+    setSearchQuery,
+    filterLanguage,
+    setFilterLanguage,
     selectedHistoryId,
     toasts,
     currentUser,
@@ -102,6 +106,10 @@ function App() {
         onLogout={handleLogout}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        filterLanguage={filterLanguage}
+        setFilterLanguage={setFilterLanguage}
       />
 
       {/* Main Workspace Area */}
@@ -141,6 +149,7 @@ function App() {
             error={error}
             review={review}
             language={language}
+            preset={preset}
           />
         </div>
       </main>

@@ -14,6 +14,10 @@ export default function Sidebar({
   onLogout,
   isOpen,
   onClose,
+  searchQuery,
+  setSearchQuery,
+  filterLanguage,
+  setFilterLanguage,
 }) {
   return (
     <>
@@ -33,6 +37,36 @@ export default function Sidebar({
           <Plus size={16} /> New Review
         </button>
 
+        {/* Search & Filter Controls */}
+        <div style={{ padding: '8px 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <input
+            type="text"
+            placeholder="🔍 Search history..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="review-name-input"
+            style={{ width: '100%', padding: '6px 10px', fontSize: '12px' }}
+          />
+          <select
+            value={filterLanguage}
+            onChange={(e) => setFilterLanguage(e.target.value)}
+            className="review-name-input"
+            style={{ width: '100%', padding: '6px 10px', fontSize: '12px', cursor: 'pointer' }}
+          >
+            <option value="all">All Languages</option>
+            <option value="javascript">JavaScript</option>
+            <option value="typescript">TypeScript</option>
+            <option value="python">Python</option>
+            <option value="go">Go</option>
+            <option value="rust">Rust</option>
+            <option value="java">Java</option>
+            <option value="cpp">C++</option>
+            <option value="sql">SQL</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+          </select>
+        </div>
+
         <div className="sidebar-section">
           <div className="section-title-row">
             <h4><History size={12} style={{ marginRight: '6px' }} /> Recent Reviews</h4>
@@ -41,7 +75,7 @@ export default function Sidebar({
           
           <div className="history-list">
             {history.length === 0 ? (
-              <p className="empty-history">No recent reviews.</p>
+              <p className="empty-history">No matching reviews.</p>
             ) : (
               history.map((item) => {
                 const id = item._id || item.id;
@@ -80,6 +114,13 @@ export default function Sidebar({
         </div>
 
         <div className="sidebar-footer">
+          {/* Capstone Student Signature */}
+          <div className="student-signature" style={{ marginBottom: '12px', paddingBottom: '4px' }}>
+            <p><strong>🎓 CSE Capstone Project</strong></p>
+            <p>Developer: B.Tech CSE Final Year</p>
+            <p>System: Groq Llama-3 Audit Engine</p>
+          </div>
+
           {history.length > 0 && !currentUser && (
             <button className="clear-history-btn" onClick={onClearHistory}>
               <Trash2 size={12} /> Clear Local History

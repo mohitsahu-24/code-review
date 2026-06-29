@@ -31,6 +31,10 @@ export default function useCodeReview() {
   // Responsive UI States
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Search & Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterLanguage, setFilterLanguage] = useState("all");
+
   // Load user details & local history on mount
   useEffect(() => {
     const savedToken = localStorage.getItem("coderev_token");
@@ -327,6 +331,14 @@ export default function useCodeReview() {
 
   const currentImprovedCode = extractImprovedCode(review);
 
+  const filteredHistory = history.filter((item) => {
+    const titleMatch = item.title ? item.title.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    const langMatch = item.language ? item.language.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    const matchesSearch = titleMatch || langMatch;
+    const matchesLang = filterLanguage === "all" || item.language === filterLanguage;
+    return matchesSearch && matchesLang;
+  });
+
   return {
     code,
     setCode,
@@ -338,7 +350,11 @@ export default function useCodeReview() {
     setPreset,
     activeTab,
     setActiveTab,
-    history,
+    history: filteredHistory,
+    searchQuery,
+    setSearchQuery,
+    filterLanguage,
+    setFilterLanguage,
     selectedHistoryId,
     toasts,
     currentUser,

@@ -4,6 +4,44 @@ import rehypeHighlight from "rehype-highlight";
 import { FileText, Sparkles, Copy, ShieldAlert, Code } from "lucide-react";
 import prism from "prismjs";
 
+const parseMetrics = (markdownText) => {
+  if (!markdownText) return null;
+  
+  // Count crucial issues (look for bullet points or numbered lists under Crucial Issues)
+  let issueCount = 0;
+  const crucialIssuesIndex = markdownText.toLowerCase().indexOf("crucial issues");
+  if (crucialIssuesIndex !== -1) {
+    const sectionText = markdownText.slice(crucialIssuesIndex, crucialIssuesIndex + 1000);
+    // count bullet points or numbered items
+    const matches = sectionText.match(/^\s*[-*•\d+.]\s+.+/gm);
+    issueCount = matches ? matches.length : 0;
+  } else {
+    // Fallback search for general bullet count
+    const matches = markdownText.match(/^\s*[-*•]\s+.+/gm);
+    issueCount = matches ? Math.min(matches.length, 4) : 0;
+  }
+  
+  // Calculate score
+  let score = 100 - (issueCount * 12);
+  if (score < 30) score = 30;
+  
+  // Determine Grade
+  let grade = "A+";
+  let gradeColor = "#10b981"; // success green
+  if (score < 90 && score >= 80) { grade = "A"; gradeColor = "#10b981"; }
+  else if (score < 80 && score >= 70) { grade = "B"; gradeColor = "#38bdf8"; }
+  else if (score < 70 && score >= 50) { grade = "C"; gradeColor = "#f59e0b"; }
+  else if (score < 50) { grade = "D"; gradeColor = "#ef4444"; }
+  
+  return {
+    issueCount,
+    score,
+    grade,
+    gradeColor,
+    timeSaved: issueCount * 5 + 5
+  };
+};
+
 export default function ReviewOutputPanel({
   activeTab,
   setActiveTab,
@@ -13,7 +51,10 @@ export default function ReviewOutputPanel({
   error,
   review,
   language,
+  preset,
 }) {
+  const metrics = parseMetrics(review);
+
   return (
     <section className="panel review-panel" aria-label="AI review">
       <div className="panel-header tabbed-header">
@@ -74,6 +115,26 @@ export default function ReviewOutputPanel({
           <>
             {activeTab === "review" ? (
               <div className="markdown-body">
+                {metrics && (
+                  <div className="metrics-dashboard">
+                    <div className="metric-card">
+                      <span className="metric-label">Quality Score</span>
+                      <span className="metric-value" style={{ color: metrics.gradeColor }}>{metrics.grade} ({metrics.score}%)</span>
+                    </div>
+                    <div className="metric-card">
+                      <span className="metric-label">Crucial Issues</span>
+                      <span className="metric-value" style={{ color: metrics.issueCount > 0 ? '#ef4444' : '#10b981' }}>{metrics.issueCount} Found</span>
+                    </div>
+                    <div className="metric-card">
+                      <span className="metric-label">Review Focus</span>
+                      <span className="metric-value" style={{ color: '#38bdf8', textTransform: 'capitalize' }}>{preset}</span>
+                    </div>
+                    <div className="metric-card">
+                      <span className="metric-label">Est. Time Saved</span>
+                      <span className="metric-value" style={{ color: '#10b981' }}>~{metrics.timeSaved} mins</span>
+                    </div>
+                  </div>
+                )}
                 <Markdown rehypePlugins={[rehypeHighlight]}>{review}</Markdown>
               </div>
             ) : (
