@@ -9,7 +9,7 @@ export default function CodeEditorPanel({
   highlightCode,
 }) {
   return (
-    <section className="panel editor-panel flex flex-col" aria-label="Code editor">
+    <section className="panel editor-panel" aria-label="Code editor">
       <div className="panel-header">
         <div className="panel-title-with-icon">
           <Terminal size={16} color="#38bdf8" />
@@ -17,7 +17,7 @@ export default function CodeEditorPanel({
         </div>
         <span className="panel-subtitle">Write or paste your code snippet below</span>
       </div>
-      <div className="code-shell flex-1">
+      <div className="code-shell">
         <Editor
           value={code}
           onValueChange={onChange}

@@ -1,6 +1,23 @@
 import React from "react";
 import useCodeReview from "./hooks/useCodeReview";
 
+// Prism highlighting languages & themes
+import "prismjs/themes/prism-tomorrow.css";
+import "prismjs/components/prism-python";
+import "prismjs/components/prism-clike";
+import "prismjs/components/prism-java";
+import "prismjs/components/prism-c";
+import "prismjs/components/prism-cpp";
+import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-go";
+import "prismjs/components/prism-rust";
+import "prismjs/components/prism-sql";
+import "prismjs/components/prism-markup";
+import "prismjs/components/prism-css";
+
+import "highlight.js/styles/github-dark.css";
+import "./App.css";
+
 // Import modular components
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";

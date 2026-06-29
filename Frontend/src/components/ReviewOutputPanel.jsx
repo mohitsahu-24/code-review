@@ -14,36 +14,33 @@ export default function ReviewOutputPanel({
   language,
 }) {
   return (
-    <section className="panel review-panel flex flex-col" aria-label="AI review">
-      <div className="panel-header tabbed-header flex justify-between items-center">
-        <div className="tabs flex gap-2">
+    <section className="panel review-panel" aria-label="AI review">
+      <div className="panel-header tabbed-header">
+        <div className="tabs">
           <button
             type="button"
-            className={`tab-btn flex items-center gap-1.5 ${activeTab === "review" ? "active" : ""}`}
+            className={`tab-btn ${activeTab === "review" ? "active" : ""}`}
             onClick={() => setActiveTab("review")}
           >
-            <FileText size={14} /> 
-            <span>AI Review</span>
+            <FileText size={14} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} /> AI Review
           </button>
           <button
             type="button"
-            className={`tab-btn flex items-center gap-1.5 ${activeTab === "improved" ? "active" : ""}`}
+            className={`tab-btn ${activeTab === "improved" ? "active" : ""}`}
             onClick={() => setActiveTab("improved")}
             disabled={!currentImprovedCode}
           >
-            <Sparkles size={14} /> 
-            <span>Improved Code</span>
+            <Sparkles size={14} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} /> Improved Code
           </button>
         </div>
         {activeTab === "improved" && currentImprovedCode && (
-          <button className="btn-copy-code flex items-center gap-1" onClick={extractAndCopyImprovedCode}>
-            <Copy size={12} /> 
-            <span>Copy Improved Code</span>
+          <button className="btn-copy-code" onClick={extractAndCopyImprovedCode}>
+            <Copy size={12} style={{ marginRight: '4px' }} /> Copy Improved Code
           </button>
         )}
       </div>
 
-      <div className="review-content flex-1 overflow-y-auto">
+      <div className="review-content">
         {isLoading && (
           <div className="skeleton-loader">
             <div className="skeleton-bar title"></div>
@@ -57,7 +54,7 @@ export default function ReviewOutputPanel({
 
         {!isLoading && error && (
           <div className="error-message">
-            <h4 className="flex items-center gap-1.5"><ShieldAlert size={18} /> Review Failed</h4>
+            <h4><ShieldAlert size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Review Failed</h4>
             <p>{error}</p>
           </div>
         )}
