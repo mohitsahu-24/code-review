@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
-import Editor from "react-simple-code-editor";
 import prism from "prismjs";
-import Markdown from "react-markdown";
-import rehypeHighlight from "rehype-highlight";
 import axios from "axios";
 
-// Import Lucide Icons
+// Import Lucide Icons (only what's needed now, or keep them for clean reference)
 import {
   Sparkles,
   Plus,
@@ -47,6 +44,14 @@ import "prismjs/components/prism-css";
 
 import "highlight.js/styles/github-dark.css";
 import "./App.css";
+
+// Import modular components
+import Sidebar from "./components/Sidebar";
+import Navbar from "./components/Navbar";
+import AuthModal from "./components/AuthModal";
+import ToastContainer from "./components/ToastContainer";
+import CodeEditorPanel from "./components/CodeEditorPanel";
+import ReviewOutputPanel from "./components/ReviewOutputPanel";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
@@ -148,6 +153,9 @@ function App() {
   const [authForm, setAuthForm] = useState({ username: "", email: "", password: "" });
   const [authError, setAuthError] = useState("");
   const [reviewName, setReviewName] = useState("");
+
+  // Responsive UI States
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Load user details & local history on mount
   useEffect(() => {
@@ -318,6 +326,7 @@ function App() {
       addToast("Failed to delete item", "error");
     }
   };
+
   // Rename a review title
   const renameHistoryItem = async (e, item) => {
     e.stopPropagation();
@@ -445,348 +454,80 @@ function App() {
   const currentImprovedCode = extractImprovedCode(review);
 
   return (
-    <div className="app-container">
+    <div className="app-container relative flex h-screen w-screen overflow-hidden bg-[#090d16] text-[#f1f5f9]">
       {/* Toast Notification Area */}
-      <div className="toast-container">
-        {toasts.map((t) => (
-          <div key={t.id} className={`toast toast-${t.type}`}>
-            {t.type === "success" && <Check size={16} />}
-            {t.type === "error" && <AlertCircle size={16} />}
-            {t.message}
-          </div>
-        ))}
-      </div>
+      <ToastContainer toasts={toasts} />
 
       {/* Auth Modal */}
-      {isAuthModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-box glass-panel">
-            <div className="modal-header">
-              <h3>{authMode === "login" ? "Welcome Back" : "Create Account"}</h3>
-              <button className="close-btn" onClick={() => setIsAuthModalOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleAuthSubmit} className="auth-form">
-              {authError && <div className="auth-error">{authError}</div>}
-              
-              {authMode === "register" && (
-                <div className="input-group">
-                  <label htmlFor="auth-username">Username</label>
-                  <input
-                    type="text"
-                    id="auth-username"
-                    value={authForm.username}
-                    onChange={(e) => setAuthForm({ ...authForm, username: e.target.value })}
-                    required
-                    placeholder="student123"
-                  />
-                </div>
-              )}
-              
-              <div className="input-group">
-                <label htmlFor="auth-email">Email Address</label>
-                <input
-                  type="email"
-                  id="auth-email"
-                  value={authForm.email}
-                  onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
-                  required
-                  placeholder="student@college.edu"
-                />
-              </div>
-
-              <div className="input-group">
-                <label htmlFor="auth-password">Password</label>
-                <input
-                  type="password"
-                  id="auth-password"
-                  value={authForm.password}
-                  onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
-                  required
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <button type="submit" className="btn btn-primary auth-submit-btn">
-                {authMode === "login" ? "Log In" : "Sign Up"}
-              </button>
-            </form>
-
-            <div className="auth-toggle">
-              {authMode === "login" ? (
-                <p>
-                  New here?{" "}
-                  <button onClick={() => { setAuthMode("register"); setAuthError(""); }}>Create an account</button>
-                </p>
-              ) : (
-                <p>
-                  Already registered?{" "}
-                  <button onClick={() => { setAuthMode("login"); setAuthError(""); }}>Log in here</button>
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        mode={authMode}
+        setMode={setAuthMode}
+        form={authForm}
+        setForm={setAuthForm}
+        onSubmit={handleAuthSubmit}
+        error={authError}
+      />
 
       {/* Sidebar for History & Student Info */}
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-logo">
-            <Sparkles size={24} color="#38bdf8" />
-          </div>
-          <div className="brand-name">
-            <h3>CodeRev.AI</h3>
-            <span>AI Code Auditor</span>
-          </div>
-        </div>
-
-        <button className="btn btn-secondary new-btn" onClick={startNewReview}>
-          <Plus size={16} /> New Review
-        </button>
-
-        <div className="sidebar-section">
-          <div className="section-title-row">
-            <h4><History size={12} style={{ marginRight: '6px' }} /> Recent Reviews</h4>
-            {currentUser && <span className="cloud-badge">Cloud</span>}
-          </div>
-          
-          <div className="history-list">
-            {history.length === 0 ? (
-              <p className="empty-history">No recent reviews.</p>
-            ) : (
-              history.map((item) => (
-                <div
-                  key={item._id || item.id}
-                  className={`history-item ${selectedHistoryId === (item._id || item.id) ? "active" : ""}`}
-                  onClick={() => loadHistoryItem(item)}
-                >
-                  <div className="history-meta">
-                    <span className="lang-tag">{item.language}</span>
-                    <div className="history-meta-right">
-                      <span className="time-tag">{item.timestamp}</span>
-                      <button 
-                         className="rename-history-btn" 
-                         onClick={(e) => renameHistoryItem(e, item)}
-                         title="Rename review"
-                       >
-                         <Pencil size={12} />
-                       </button>
-                    <button 
-                         className="delete-history-btn" 
-                         onClick={(e) => deleteHistoryItem(e, item._id || item.id)}
-                         title="Delete review"
-                       >
-                         <Trash2 size={12} />
-                       </button>
-                    </div>
-                  </div>
-                  <div className="history-title">{item.title}</div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="sidebar-footer">
-          {history.length > 0 && !currentUser && (
-            <button className="clear-history-btn" onClick={clearAllHistory}>
-              <Trash2 size={12} /> Clear Local History
-            </button>
-          )}
-
-          {/* User Authentication Panel */}
-          <div className="user-auth-panel">
-            {currentUser ? (
-              <div className="logged-user-info">
-                <div className="user-details">
-                  <User size={16} color="#38bdf8" />
-                  <span className="username-txt">{currentUser.username}</span>
-                </div>
-                <button className="logout-btn" onClick={handleLogout} title="Log Out">
-                  <LogOut size={14} />
-                </button>
-              </div>
-            ) : (
-              <button className="btn btn-secondary login-prompt-btn" onClick={() => { setIsAuthModalOpen(true); setAuthMode("login"); setAuthError(""); }}>
-                <LogIn size={14} /> Log In / Sign Up
-              </button>
-            )}
-          </div>
-
-
-        </div>
-      </aside>
+      <Sidebar
+        history={history}
+        selectedHistoryId={selectedHistoryId}
+        currentUser={currentUser}
+        onNewReview={startNewReview}
+        onLoadItem={loadHistoryItem}
+        onDeleteItem={deleteHistoryItem}
+        onRenameItem={renameHistoryItem}
+        onClearHistory={clearAllHistory}
+        onLoginPrompt={() => {
+          setIsAuthModalOpen(true);
+          setAuthMode("login");
+          setAuthError("");
+        }}
+        onLogout={handleLogout}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       {/* Main Workspace Area */}
-      <main className="main-workspace">
-        <header className="workspace-header">
-          <div className="control-group">
-            <div className="select-wrapper">
-              <label htmlFor="language-select">Language</label>
-              <select
-                id="language-select"
-                value={language}
-                onChange={handleLanguageChange}
-                disabled={isLoading}
-              >
-                <option value="javascript">JavaScript</option>
-                <option value="typescript">TypeScript</option>
-                <option value="python">Python</option>
-                <option value="go">Go</option>
-                <option value="rust">Rust</option>
-                <option value="java">Java</option>
-                <option value="cpp">C++</option>
-                <option value="sql">SQL</option>
-                <option value="html">HTML</option>
-                <option value="css">CSS</option>
-              </select>
-            </div>
-
-            <div className="select-wrapper">
-              <label htmlFor="preset-select">Review Focus</label>
-              <select
-                id="preset-select"
-                value={preset}
-                onChange={(e) => setPreset(e.target.value)}
-                disabled={isLoading}
-              >
-                <option value="general">📊 General Review</option>
-                <option value="security">⚠️ Security Audit</option>
-                <option value="performance">🚀 Performance Tuning</option>
-                <option value="refactor">💡 Clean Code Refactor</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="action-buttons">
-            {review && (
-              <>
-                <button className="btn btn-secondary btn-icon" onClick={copyReviewToClipboard} title="Copy Review">
-                  <Copy size={14} /> Copy Review
-                </button>
-                <button className="btn btn-secondary btn-icon" onClick={downloadReview} title="Download Report">
-                  <Download size={14} /> Download Report
-                </button>
-              </>
-            )}
-            <button className="btn btn-primary" onClick={reviewCode} disabled={isLoading || !code.trim()}>
-              {isLoading ? (
-                <>
-                  <span className="spinner"></span> Reviewing...
-                </>
-              ) : (
-                <>
-                  <Play size={14} style={{ fill: '#0f172a' }} /> Review Code
-                </>
-              )}
-            </button>
-          </div>
-        </header>
+      <main className="main-workspace flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* Navigation / Header Bar */}
+        <Navbar
+          language={language}
+          onLanguageChange={handleLanguageChange}
+          preset={preset}
+          setPreset={setPreset}
+          isLoading={isLoading}
+          review={review}
+          code={code}
+          onReviewCode={reviewCode}
+          onCopyReview={copyReviewToClipboard}
+          onDownloadReview={downloadReview}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
 
         {/* Panel Split Grid */}
-        <div className="workspace-panels">
+        <div className="workspace-panels flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 p-4 md:p-6 overflow-y-auto lg:overflow-hidden min-h-0">
           {/* Code Input Panel */}
-          <section className="panel editor-panel" aria-label="Code editor">
-            <div className="panel-header">
-              <div className="panel-title-with-icon">
-                <Terminal size={16} color="#38bdf8" />
-                <h3>Source Code</h3>
-              </div>
-              <span className="panel-subtitle">Write or paste your code snippet below</span>
-            </div>
-            <div className="code-shell">
-              <Editor
-                value={code}
-                onValueChange={setCode}
-                highlight={highlightCode}
-                padding={20}
-                textareaClassName="editor-textarea"
-                preClassName="editor-preview"
-              />
-            </div>
-          </section>
+          <CodeEditorPanel
+            code={code}
+            onChange={setCode}
+            language={language}
+            highlightCode={highlightCode}
+          />
 
           {/* AI Review Output Panel */}
-          <section className="panel review-panel" aria-label="AI review">
-            <div className="panel-header tabbed-header">
-              <div className="tabs">
-                <button
-                  type="button"
-                  className={`tab-btn ${activeTab === "review" ? "active" : ""}`}
-                  onClick={() => setActiveTab("review")}
-                >
-                  <FileText size={14} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} /> AI Review
-                </button>
-                <button
-                  type="button"
-                  className={`tab-btn ${activeTab === "improved" ? "active" : ""}`}
-                  onClick={() => setActiveTab("improved")}
-                  disabled={!currentImprovedCode}
-                >
-                  <Sparkles size={14} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} /> Improved Code
-                </button>
-              </div>
-              {activeTab === "improved" && currentImprovedCode && (
-                <button className="btn-copy-code" onClick={extractAndCopyImprovedCode}>
-                  <Copy size={12} style={{ marginRight: '4px' }} /> Copy Improved Code
-                </button>
-              )}
-            </div>
-
-            <div className="review-content">
-              {isLoading && (
-                <div className="skeleton-loader">
-                  <div className="skeleton-bar title"></div>
-                  <div className="skeleton-bar body-line"></div>
-                  <div className="skeleton-bar body-line"></div>
-                  <div className="skeleton-bar body-line half"></div>
-                  <div className="skeleton-box"></div>
-                  <div className="skeleton-bar body-line"></div>
-                </div>
-              )}
-
-              {!isLoading && error && (
-                <div className="error-message">
-                  <h4><ShieldAlert size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Review Failed</h4>
-                  <p>{error}</p>
-                </div>
-              )}
-
-              {!isLoading && !error && !review && (
-                <div className="empty-state">
-                  <div className="empty-icon">
-                    <Code size={48} color="#38bdf8" />
-                  </div>
-                  <h3>Waiting for input</h3>
-                  <p>Select your language, write your code, and click <strong>Review Code</strong> above to run an AI-powered code audit.</p>
-                </div>
-              )}
-
-              {!isLoading && !error && review && (
-                <>
-                  {activeTab === "review" ? (
-                    <div className="markdown-body">
-                      <Markdown rehypePlugins={[rehypeHighlight]}>{review}</Markdown>
-                    </div>
-                  ) : (
-                    <div className="improved-code-view">
-                      <div className="improved-header-meta">
-                        <span>Optimized Rewrite ({language})</span>
-                      </div>
-                      <pre className="improved-pre">
-                        <code className={`language-${language}`}>
-                          {currentImprovedCode}
-                        </code>
-                      </pre>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </section>
+          <ReviewOutputPanel
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            currentImprovedCode={currentImprovedCode}
+            extractAndCopyImprovedCode={extractAndCopyImprovedCode}
+            isLoading={isLoading}
+            error={error}
+            review={review}
+            language={language}
+          />
         </div>
       </main>
     </div>
